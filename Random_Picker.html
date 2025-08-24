@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Picker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f7f7f7;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.30);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 160px;
+      font-size: 16px;
+      padding: 0px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      white-space: pre;
+      background: #f1f1f1
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    #resetBtn { background: #f44336; } /* 🔹 Red button for reset */
+    #resetBtn:hover { background: #d32f2f; } /* 🔹 Hover effect for reset */
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
+    }
+    .tip {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random Picker</h1>
+  <p>Enter one item per line. Click <b>Pick Random</b> to choose an item.</p>
+
+  <textarea id="items" placeholder="Type your list here..."></textarea>
+
+  <button id="pickBtn">Pick Random</button> <!-- 🔹 Added ID for easier reference -->
+  <button id="resetBtn">Reset List</button> <!-- 🔹 Reset button -->
+
+  <label><input type="checkbox" id="noRepeat"> Avoid immediate repeats</label>
+
+  <div id="result"><b>— result will appear here —</b></div>
+  <div class="tip">Tip: Press Ctrl/Cmd + Enter to pick.</div>
+
+  <script>
+    let lastPick = null;
+
+    // 🔹 Load saved list when page opens
+    window.addEventListener("load", () => {
+      const saved = localStorage.getItem("savedItems");
+      if (saved) {
+        document.getElementById("items").value = saved;
+      }
+    });
+
+    // 🔹 Save list automatically whenever user types
+    document.getElementById("items").addEventListener("input", () => {
+      localStorage.setItem("savedItems", document.getElementById("items").value);
+    });
+
+    // 🔹 Pick Random Function
+    function pickRandom() {
+      const textArea = document.getElementById("items");
+      let items = textArea.value
+        .split("\n")
+        .map(item => item.trim())
+        .filter(item => item !== "");
+
+      if (items.length === 0) { // 🔹 Stop if empty
+        document.getElementById("result").textContent = "No more items left!";
+        return;
+      }
+
+      let choice;
+      do { // 🔹 Avoid immediate repeat if checkbox is checked
+        const randomIndex = Math.floor(Math.random() * items.length);
+        choice = items[randomIndex];
+
+        // 🔹 Remove picked item from list
+        items.splice(randomIndex, 1);
+      } while (document.getElementById("noRepeat").checked && lastPick !== null && choice === lastPick && items.length > 0);
+
+      lastPick = choice;
+      document.getElementById("result").textContent = choice;
+
+      // 🔹 Update textarea and localStorage
+      textArea.value = items.join("\n");
+      localStorage.setItem("savedItems", textArea.value);
+
+      // 🔹 Disable pick button if list is empty
+      document.getElementById("pickBtn").disabled = items.length === 0;
+    }
+
+    document.getElementById("pickBtn").addEventListener("click", pickRandom);
+
+    // 🔹 Reset button
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      document.getElementById("items").value = "";
+      document.getElementById("result").textContent = "— result will appear here —";
+      localStorage.removeItem("savedItems");
+      lastPick = null;
+      document.getElementById("pickBtn").disabled = false; // re-enable pick button
+    });
+
+    // 🔹 Ctrl/Cmd + Enter picks random
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        pickRandom();
+      }
+    });
+  </script>
+</body>
+</html>
+
